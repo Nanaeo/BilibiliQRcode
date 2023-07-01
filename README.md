@@ -6,8 +6,11 @@ BlibiliQRcode On WebPC
 3. Run BlibiliQRcode.py
 ## About
 Use Edge DevTool
+
 Dev By Mlikiowa
+
 2023/7/1
+
 ## **Disclaimer: Code Usage and Legal Warning**
 
 The code provided here is for informational purposes only. By accessing and utilizing the code, you acknowledge and agree to the following:
