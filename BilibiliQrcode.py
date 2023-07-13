@@ -43,6 +43,7 @@ class BilibiliQrcode:
                 print("Scan Result:" + res["data"]["message"])
                 if not self.generate_qrcode():
                     return False
+                continue
             if res["data"]["code"] == 86090 or res["data"]["code"] == 86101:
                 print("Scan Result:" + res["data"]["message"])
                 continue
@@ -66,7 +67,7 @@ class BilibiliQrcode:
         return True
 
     def get_sso_login(self, ssotype):
-        # 进行 SSO 登录
+        # 获取 SSO 登录链接
         res = self.session.get(
             "https://passport.bilibili.com/x/passport-login/web/sso/list",
             params={"biliCSRF": self.csrf},
@@ -93,3 +94,4 @@ class BilibiliQrcode:
 bilibili = BilibiliQrcode()
 bilibili.login()
 print(bilibili.get_sso_login(2))
+
