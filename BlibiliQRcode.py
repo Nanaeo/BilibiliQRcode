@@ -1,100 +1,95 @@
 import time
 from urllib.parse import urlparse, parse_qs
-import requests
 import qrcode
-
-"""
-Parameters:
-  param1 - type: 1: biligame.com 2: bilibili.cn 3: bilicomic.com 4: bilicomics.com
- 
-Returns:
-    cookies in dict
-"""
+import requests
 
 
-def login_var_qrcode(type=1) -> dict:
-    s = requests.session()
+class BilibiliQrcode:
+    def __init__(self):
+        self.session = requests.session()
+        self.cookies = {}
+        self.csrf = ""
+        self.qrcode_url = ""
+        self.qrcode_key = ""
 
-    # 初始化获取 QRcode
-    res = s.get(
-        url="https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
-    ).json()
-    if res["code"] != 0:
-        print("Get qrcode Error")
-        return {}
+    def generate_qrcode(self):
+        # 生成二维码
+        res = self.session.get("https://passport.bilibili.com/x/passport-login/web/qrcode/generate").json()
+        if res["code"] != 0:
+            print("Get qrcode Error")
+            return False
 
-    qrcode_url = res["data"]["url"]
-    qrcode_key = res["data"]["qrcode_key"]
-    print("Scan URL:" + qrcode_url)
-    print("Scan Key:" + qrcode_key)
+        self.qrcode_url = res["data"]["url"]
+        self.qrcode_key = res["data"]["qrcode_key"]
+        print("Scan URL:" + self.qrcode_url)
+        print("Scan Key:" + self.qrcode_key)
 
-    # create a QR code instance
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(self.qrcode_url)
+        qr.make(fit=True)
+        qr.print_ascii()
 
-    # add data to the QR code
-    qr.add_data(qrcode_url)
+        return True
 
-    # generate the QR code
-    qr.make(fit=True)
+    def login(self):
+        # 登录过程
+        self.generate_qrcode()
+        while True:
+            time.sleep(3)
+            verify_url = f"https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key={self.qrcode_key}"
+            res = self.session.get(verify_url).json()
+            print(res["data"]["code"])
+            if res["data"]["code"] == 86038:
+                print("Scan Result:" + res["data"]["message"])
+                if not self.generate_qrcode():
+                    return False
+            if res["data"]["code"] == 86090 or res["data"]["code"] == 86101:
+                print("Scan Result:" + res["data"]["message"])
+                continue
+            else:
+                break
 
-    # print the QR code as ASCII art
-    qr.print_ascii()
+        if res["data"]["code"] != 0 or res["data"]["url"] == "":
+            print("Login Error")
+            return False
 
-    while True:
-        time.sleep(3)
-        verify_url = (
-            "https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key="
-            + qrcode_key
-        )
-        res = s.get(verify_url).json()
-        print(res["data"]["code"])
-        if res["data"]["code"] == 86090 or res["data"]["code"] == 86101:
-            # 86090 二维码已扫码未确认 86101 未扫码
-            print("Scan Result:" + res["data"]["message"])
-            continue
-        else:
-            break
+        parsed_url = urlparse(res["data"]["url"])
+        captured_value = parse_qs(parsed_url.query)
 
-    if res["data"]["code"] != 0 or res["data"]["url"] == "":
-        print("Login Error")
-        return {}
+        self.csrf = captured_value["bili_jct"][0]
+        user_id = captured_value["DedeUserID"][0]
+        sess_data = captured_value["SESSDATA"][0]
 
-    print("Bilibili Login...")
+        print("Bilibili Csrf:" + self.csrf)
+        print("Bilibili User ID:" + user_id)
+        print("Bilibili Sessdata:" + sess_data)
+        return True
 
-    parsed_url = urlparse(res["data"]["url"])
-    captured_value = parse_qs(parsed_url.query)
+    def get_sso_login(self, ssotype):
+        # 进行 SSO 登录
+        res = self.session.get(
+            "https://passport.bilibili.com/x/passport-login/web/sso/list",
+            params={"biliCSRF": self.csrf},
+        ).json()
+        if res["code"] != 0:
+            print("Login Error")
+            return {}
+        sso_dict = res["data"]["sso"]
+        print("SsoAuthLink:", sso_dict)
+        _ = self.session.get(sso_dict[ssotype])
+        print("Login OK!")
+        self.cookies = self.session.cookies.get_dict()
+        return self.cookies
 
-    csrf = captured_value["bili_jct"][0]
-    user_id = captured_value["DedeUserID"][0]
-    sess_data = captured_value["SESSDATA"][0]
-
-    print("Bilibili Csrf:" + csrf)
-    print("Bilibili User ID:" + user_id)
-    print("Bilibili Sessdata:" + sess_data)
-    res = s.get(
-        "https://passport.bilibili.com/x/passport-login/web/sso/list",
-        params={"biliCSRF": csrf},
-    ).json()
-    if res["code"] != 0:
-        print("Login Error")
-        return {}
-    sso_dict = res["data"]["sso"]
-    print("SsoAuthLink:", sso_dict)
-    res = s.get(sso_dict[type])
-    print("Login OK!")
-    print("Cookies:", s.cookies.get_dict())
-    return s.cookies.get_dict()
+    def get_user_info(self):
+        # 获取用户信息
+        res = self.session.get("https://api.bilibili.com/x/web-interface/nav", cookies=self.cookies).json()
+        if res["code"] != 0:
+            return ""
+        return res
 
 
-def get_user_info(cookie):
-    res = requests.get(
-        "https://api.bilibili.com/x/web-interface/nav", cookies=cookie
-    ).json()
-    if res["code"] != 0:
-        print("Login Fail")
-        exit(1)
-    print(f"isLogin:{res['data']['isLogin']}")
-    print("uname:" + res["data"]["uname"])
-    print("current_face:" + res["data"]["face"])
-    print(f"current_level:{res['data']['level_info']['current_level']}")
-    print(f"current_exp:{res['data']['level_info']['current_exp']}")
+# 示例用法
+bilibili = BilibiliQrcode()
+bilibili.login()
+print(bilibili.get_sso_login(2))
