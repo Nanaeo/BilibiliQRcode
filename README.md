@@ -1,9 +1,9 @@
 # BlibiliQRcode
-BlibiliQRcode On WebPC
+BilibiliQrcode On WebPC
 ## Use It
 1. Download the project
 2. Install requirement environment
-3. Run BlibiliQRcode.py
+3. Run BilibiliQrcode.py
 ## About
 Use Edge DevTool
 
