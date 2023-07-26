@@ -21,7 +21,7 @@ The code provided here is for informational purposes only. By accessing and util
 
 3. The code may not be used for any illegal, malicious, or unethical activities. It is strictly prohibited to use the code for unauthorized access, hacking, data breaches, or any other illegal activities. Any such use is a violation of the terms and may result in legal consequences.
 
-4. The code is provided without any liability on the part of the code creator. In no event shall the code creator or OpenAI be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in connection with the use or inability to use the code.
+4. The code is provided without any liability on the part of the code creator. In no event shall the code creator be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in connection with the use or inability to use the code.
 
 By using the code, you agree to indemnify and hold harmless the code creator from any claims, damages, losses, or liabilities arising out of or related to your use of the code.
 
