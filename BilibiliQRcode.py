@@ -22,9 +22,6 @@ class BilibiliQRcode:
 
         self.qrcode_url = res["data"]["url"]
         self.qrcode_key = res["data"]["qrcode_key"]
-        # print("Scan URL:" + self.qrcode_url)
-        # print("Scan Key:" + self.qrcode_key)
-
         qr = qrcode.QRCode()
         qr.add_data(self.qrcode_url)
         qr.print_ascii()
@@ -56,12 +53,6 @@ class BilibiliQRcode:
         captured_value = parse_qs(parsed_url.query)
 
         self.csrf = captured_value["bili_jct"][0]
-        # user_id = captured_value["DedeUserID"][0]
-        # sess_data = captured_value["SESSDATA"][0]
-
-        # print("Bilibili Csrf:" + self.csrf)
-        # print("Bilibili User ID:" + user_id)
-        # print("Bilibili Sessdata:" + sess_data)
         return self.session.cookies.get_dict()
 
     def get_sso_login(self, ssotype):
